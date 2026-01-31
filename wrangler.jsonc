@@ -34,7 +34,38 @@
 	],
 	"observability": {
 		"enabled": true
-	}
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "NEXT_CACHE_DO_QUEUE",
+				"class_name": "DOQueueHandler"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"DOQueueHandler"
+			]
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "gdgoc-yonsei-db",
+			"database_id": "651c7fcf-9bf8-49cb-9539-1bd62fdf5ec8",
+			"remote": true
+		}
+	],
+	"r2_buckets": [
+		{
+			"bucket_name": "gdgoc-yonsei-cf",
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"remote": true
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
