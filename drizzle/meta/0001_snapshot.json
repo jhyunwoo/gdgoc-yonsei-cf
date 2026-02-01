@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "36f29b12-3fc9-4028-8e7a-0307f47bb047",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "fffc2e8d-5ff1-4a6b-a812-5730447ec9d2",
+  "prevId": "36f29b12-3fc9-4028-8e7a-0307f47bb047",
   "tables": {
     "account": {
       "name": "account",
@@ -1008,8 +1008,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "userToSession": {
-      "name": "userToSession",
+    "user_to_session": {
+      "name": "user_to_session",
       "columns": {
         "user_id": {
           "name": "user_id",
@@ -1028,9 +1028,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "userToSession_user_id_user_id_fk": {
-          "name": "userToSession_user_id_user_id_fk",
-          "tableFrom": "userToSession",
+        "user_to_session_user_id_user_id_fk": {
+          "name": "user_to_session_user_id_user_id_fk",
+          "tableFrom": "user_to_session",
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
@@ -1041,9 +1041,9 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "userToSession_sessionId_sessions_id_fk": {
-          "name": "userToSession_sessionId_sessions_id_fk",
-          "tableFrom": "userToSession",
+        "user_to_session_sessionId_sessions_id_fk": {
+          "name": "user_to_session_sessionId_sessions_id_fk",
+          "tableFrom": "user_to_session",
           "tableTo": "sessions",
           "columnsFrom": [
             "sessionId"
@@ -1056,12 +1056,12 @@
         }
       },
       "compositePrimaryKeys": {
-        "userToSession_user_id_sessionId_pk": {
+        "user_to_session_user_id_sessionId_pk": {
           "columns": [
             "user_id",
             "sessionId"
           ],
-          "name": "userToSession_user_id_sessionId_pk"
+          "name": "user_to_session_user_id_sessionId_pk"
         }
       },
       "uniqueConstraints": {},
@@ -1250,7 +1250,9 @@
   "enums": {},
   "_meta": {
     "schemas": {},
-    "tables": {},
+    "tables": {
+      "\"userToSession\"": "\"user_to_session\""
+    },
     "columns": {}
   },
   "internal": {

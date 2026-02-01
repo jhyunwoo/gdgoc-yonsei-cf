@@ -1,17 +1,16 @@
 "use client";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { createAuthClient } from "better-auth/react";
+import { authClient } from "@/lib/auth/client";
 
 type Inputs = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   passwordConfirmation: string;
 };
 
 export default function SignUpForm() {
-  const authClient = createAuthClient();
-
   const {
     register,
     handleSubmit,
@@ -20,11 +19,13 @@ export default function SignUpForm() {
 
   const onSubmit: SubmitHandler<Inputs> = async (inputData) => {
     const { data, error } = await authClient.signUp.email({
-      name: inputData.name, // required
-      email: inputData.email, // required
-      password: inputData.password, // required
+      name: inputData.firstName + " " + inputData.lastName,
+      email: inputData.email,
+      password: inputData.password,
       callbackURL: "/",
-    });
+      firstName: inputData.firstName,
+      lastName: inputData.lastName,
+    } as Parameters<typeof authClient.signUp.email>[0]);
     console.log(data, error);
   };
 
@@ -33,7 +34,14 @@ export default function SignUpForm() {
       onSubmit={handleSubmit(onSubmit)}
       className={"flex flex-col gap-2 items-center"}
     >
-      <input placeholder={"name"} {...register("name", { required: true })} />
+      <input
+        placeholder={"first name"}
+        {...register("firstName", { required: true })}
+      />
+      <input
+        placeholder={"last name"}
+        {...register("lastName", { required: true })}
+      />
 
       <input placeholder={"email"} {...register("email", { required: true })} />
 

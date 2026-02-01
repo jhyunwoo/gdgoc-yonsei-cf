@@ -1,6 +1,21 @@
+import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  /** The base URL of the server (optional if you're using the same domain) */
-  baseURL: "https://gdgoc-yonsei-cf.moveto.workers.dev",
+  plugins: [
+    inferAdditionalFields({
+      user: {
+        firstName: { type: "string", required: true, input: true },
+        lastName: { type: "string", required: true, input: true },
+        studentId: { type: "number", required: false, input: true },
+        major: { type: "string", required: false, input: true },
+        role: {
+          type: "string",
+          required: false,
+          defaultValue: "UNVERIFIED",
+          input: false,
+        },
+      }, 
+    }),
+  ],
 });

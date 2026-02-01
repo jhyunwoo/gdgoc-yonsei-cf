@@ -10,12 +10,23 @@ import * as schema from "./db/schema";
  */
 export function createAuth(db: DrizzleD1Database<typeof schema>) {
   return betterAuth({
+    user: {
+      additionalFields: {
+        firstName: { type: "string", required: true, input: true },
+        lastName: { type: "string", required: true, input: true },
+        studentId: { type: "number", required: false, input: true },
+        major: { type: "string", required: false, input: true },
+        role: {
+          type: "string",
+          required: false, 
+          defaultValue: "UNVERIFIED",
+          input: false,
+        },
+      },
+    },
     database: drizzleAdapter(db, {
       provider: "sqlite",
       schema,
     }),
-    emailAndPassword: {
-      enabled: true,
-    },
   });
 }
