@@ -10,6 +10,9 @@ import * as schema from "./db/schema";
  */
 export function createAuth(db: DrizzleD1Database<typeof schema>) {
   return betterAuth({
+    emailAndPassword: {
+      enabled: true,
+    },
     user: {
       additionalFields: {
         firstName: { type: "string", required: true, input: true },
@@ -18,7 +21,7 @@ export function createAuth(db: DrizzleD1Database<typeof schema>) {
         major: { type: "string", required: false, input: true },
         role: {
           type: "string",
-          required: false, 
+          required: false,
           defaultValue: "UNVERIFIED",
           input: false,
         },

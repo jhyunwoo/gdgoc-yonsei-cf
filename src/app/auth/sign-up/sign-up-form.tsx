@@ -22,7 +22,7 @@ export default function SignUpForm() {
       name: inputData.firstName + " " + inputData.lastName,
       email: inputData.email,
       password: inputData.password,
-      callbackURL: "/",
+      callbackURL: "/profile",
       firstName: inputData.firstName,
       lastName: inputData.lastName,
     } as Parameters<typeof authClient.signUp.email>[0]);
@@ -47,10 +47,12 @@ export default function SignUpForm() {
 
       <input
         placeholder={"password"}
+        type={"password"}
         {...register("password", { required: true })}
       />
       <input
         placeholder={"password confirmation"}
+        type={"password"}
         {...register("passwordConfirmation", { required: true })}
       />
 

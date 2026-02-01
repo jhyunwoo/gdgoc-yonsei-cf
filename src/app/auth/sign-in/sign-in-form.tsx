@@ -21,7 +21,7 @@ export default function SignInForm() {
     const { data, error } = await authClient.signIn.email({
       email: inputData.email, // required
       password: inputData.password, // required
-      callbackURL: "/",
+      callbackURL: "/profile",
     });
     console.log(data, error);
   };
@@ -35,6 +35,7 @@ export default function SignInForm() {
 
       <input
         placeholder={"password"}
+        type={"password"}
         {...register("password", { required: true })}
       />
 
