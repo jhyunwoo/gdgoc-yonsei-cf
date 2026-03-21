@@ -1,0 +1,50 @@
+import handlePermission, {
+  ResourceType,
+} from '@/lib/server/permission/handle-permission'
+import Link from 'next/link'
+import { Session, User } from 'better-auth/types'
+
+/**
+ * 데이터 수정 Link 컴포넌트
+ *
+ * 사용자가 수정 권한이 있으면 네비게이션 버튼을 보여줌
+ * @param session - 사용자 session
+ * @param dataOwnerId - 수정하는 프로젝트의 소유자 ID
+ * @param href - 수정 페이지 링크
+ * @param dataType - 수정하는 데이터 종류
+ * @constructor
+ */
+export default async function DataEditLink({
+  session,
+  dataOwnerId,
+  href,
+  dataType,
+}: {
+  session: { session: Session; user: User } | null
+  dataOwnerId?: string
+  href: string
+  dataType: ResourceType
+}) {
+  // 사용자가 수정할 수 있는지 확인
+  const canEdit = await handlePermission(
+    session?.user?.id,
+    'put',
+    dataType,
+    dataOwnerId
+  )
+
+  return (
+    <>
+      {canEdit && (
+        <Link
+          href={href}
+          className={
+            'rounded-lg bg-neutral-900 p-1 px-3 text-white transition-all hover:bg-neutral-800 hover:px-4'
+          }
+        >
+          Edit
+        </Link>
+      )}
+    </>
+  )
+}

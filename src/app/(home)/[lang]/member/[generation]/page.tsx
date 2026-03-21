@@ -1,0 +1,105 @@
+import { Metadata } from 'next'
+import UserProfileCard from '@/app/(home)/[lang]/member/[generation]/user-profile-card'
+import { getDB } from '@/lib/db'
+import { asc, eq } from 'drizzle-orm'
+import { generations, parts } from '@/lib/db/schema'
+import cacheTagT from '@/lib/server/cacheTagT'
+import PageTitle from '@/app/components/page-title'
+import StageButtonGroup from '@/app/components/stage-button-group'
+import getGenerationList from '@/lib/server/fetcher/getGenerationList'
+import addLangParams from '@/lib/server/add-lang-params'
+
+type Props = {
+  params: Promise<{ lang: string; generation: string }>
+}
+
+export const dynamicParams = true
+export const dynamic = 'force-static'
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang, generation } = await params
+
+  if (lang === 'ko') {
+    return {
+      title: `${generation} 구성원`,
+      description: `GDGoC Yonsei ${generation} 구성원`,
+    }
+  }
+
+  return {
+    title: `${generation} Members`,
+    description: `GDGoC Yonsei ${generation} Members`,
+  }
+}
+
+export async function generateStaticParams() {
+  const generationList = await getGenerationList()
+  return addLangParams(
+    generationList.map((generation) => ({ generation: generation.name })),
+    ['ko', 'en']
+  )
+}
+
+export default async function MembersPage({ params }: Props) {
+  'use cache'
+  cacheTagT('parts', 'members')
+  const paramsData = await params
+
+  const db = await getDB()
+  const generationData = await db.query.generations.findFirst({
+    where: eq(generations.name, paramsData.generation),
+    with: {
+      parts: {
+        with: {
+          usersToParts: {
+            with: {
+              user: true,
+            },
+          },
+        },
+        orderBy: asc(parts.displayOrder),
+      },
+    },
+  })
+
+  return (
+    <div className={'min-h-screen w-full pt-20'}>
+      <PageTitle>{paramsData.lang === 'ko' ? '구성원' : 'Members'}</PageTitle>
+      <StageButtonGroup
+        basePath={'member'}
+        generation={paramsData.generation}
+        lang={paramsData.lang}
+      />
+      <div className={'flex w-full flex-col gap-8'}>
+        {generationData?.parts?.map((part, i) => (
+          <div
+            key={i}
+            className={
+              'flex flex-col gap-4 border-b-2 border-neutral-200 pb-24 last:border-b-0'
+            }
+          >
+            <div className={'mx-auto w-full max-w-4xl px-4 text-4xl font-bold'}>
+              {part.name}
+            </div>
+            <div
+              className={
+                'mx-auto grid w-full max-w-4xl grid-cols-1 gap-2 px-4 md:grid-cols-2 lg:grid-cols-3'
+              }
+            >
+              {part.usersToParts?.map((user, j) => (
+                <UserProfileCard
+                  lang={paramsData.lang}
+                  userData={user.user}
+                  key={j}
+                />
+              ))}
+              {part.usersToParts.length === 0 && (
+                <div className={'text-neutral-600'}>There is no member.</div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

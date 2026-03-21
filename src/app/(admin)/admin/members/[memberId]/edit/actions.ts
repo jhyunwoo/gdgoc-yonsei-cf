@@ -1,0 +1,115 @@
+'use server'
+
+import { getDB } from '@/lib/db'
+import { user as users } from '@/lib/db/schema'
+import { forbidden, redirect } from 'next/navigation'
+import { eq } from 'drizzle-orm'
+import handlePermission from '@/lib/server/permission/handle-permission'
+import { getSession } from '@/lib/auth/server'
+import { memberValidation } from '@/lib/validations/member'
+import { z } from 'zod'
+import getMemberFormData from '@/lib/server/form-data/get-member-form-data'
+import { revalidateCache } from '@/lib/server/cache'
+
+/**
+ * Update Member Action
+ * @param memberId - member id
+ * @param prev - previous state for form error
+ * @param formData - member data
+ */
+export async function updateMemberAction(
+  memberId: string,
+  prev: { error: string },
+  formData: FormData
+) {
+  // 사용자가 member 를 수정할 권한이 있는지 확인
+  const session = await getSession()
+  if (
+    !(await handlePermission(session?.user?.id, 'put', 'members', memberId))
+  ) {
+    return forbidden()
+  }
+
+  // form data 에서 member data 추출
+  const {
+    name,
+    firstName,
+    firstNameKo,
+    lastName,
+    lastNameKo,
+    email,
+    githubId,
+    instagramId,
+    linkedInId,
+    major,
+    studentId,
+    telephone,
+    role,
+    isForeigner,
+    profileImage,
+  } = getMemberFormData(formData)
+
+  try {
+    // zod validation
+    memberValidation.parse({
+      name,
+      firstName,
+      firstNameKo,
+      lastName,
+      lastNameKo,
+      email,
+      githubId,
+      instagramId,
+      linkedInId,
+      major,
+      studentId,
+      telephone,
+      role,
+      isForeigner,
+      profileImage,
+    })
+  } catch (err) {
+    // 데이터 형식이 맞지 않을 경우 오류 반환
+    if (err instanceof z.ZodError) {
+      console.log(err.issues)
+      return { error: err.issues[0].message }
+    }
+  }
+  // member data 업데이트 쿼리
+  try {
+    const db = await getDB();
+    await db
+      .update(users)
+      .set({
+        name: name!,
+        firstName,
+        firstNameKo: firstNameKo ?? undefined,
+        lastName: lastName ?? undefined,
+        lastNameKo: lastNameKo ?? undefined,
+        email: email ?? undefined,
+        githubId: githubId ?? undefined,
+        instagramId: instagramId ?? undefined,
+        linkedInId: linkedInId ?? undefined,
+        major,
+        studentId: studentId ? Number(studentId) : null,
+        telephone: telephone?.replaceAll('-', '').replaceAll(' ', ''),
+        ...((await handlePermission(session?.user?.id, 'put', 'membersRole')) &&
+        role
+          ? { role: role }
+          : {}),
+        isForeigner,
+        image: profileImage,
+      })
+      .where(eq(users.id, memberId))
+
+    // 캐시 업데이트
+    revalidateCache('members')
+  } catch (e) {
+    // DB 업데이트 오류 발생 시 오류 반환
+    console.error(e)
+    return { error: 'DB Update Error' }
+  }
+
+  // 성공 시 해당 member 페이지로 이동
+  redirect(`/admin/members/${memberId}`)
+}

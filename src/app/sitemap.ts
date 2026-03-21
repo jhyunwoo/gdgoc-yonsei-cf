@@ -1,0 +1,110 @@
+import type { MetadataRoute } from "next";
+
+import getGenerationList from "@/lib/server/fetcher/getGenerationList";
+import getSessionList from "@/app/(home)/[lang]/session/[generation]/getSessionList";
+import { getDB } from "@/lib/db";
+
+function intlSitemapGenerator(MetadataRoute: MetadataRoute.Sitemap) {
+  const langs = ["ko", "en"];
+
+  return langs.flatMap((lang) => {
+    return MetadataRoute.map((item) => ({
+      ...item,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}${item.url}`,
+      lastModified: item.lastModified || new Date(),
+      changeFrequency: item.changeFrequency || "monthly",
+      priority: item.priority || 0.5,
+    }));
+  });
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const db = await getDB();
+  const generationList = await getGenerationList();
+
+  const projectsList: MetadataRoute.Sitemap = (
+    await db.query.projects.findMany({
+      columns: {
+        id: true,
+        updatedAt: true,
+        createdAt: true,
+        generationId: true,
+      },
+    })
+  ).map((project) => {
+    const generationName = generationList.filter(
+      (item) => item.id === project.generationId,
+    )[0].name;
+    return {
+      url: `/project/${generationName}/${project.id}`,
+      lastModified:
+        project.updatedAt > project.createdAt
+          ? project.updatedAt
+          : project.createdAt,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    };
+  });
+
+  const sessionsList: MetadataRoute.Sitemap = [];
+
+  for (const generation of generationList) {
+    const sessions = await getSessionList(generation.name);
+    if (sessions) {
+      for (const session of sessions) {
+        sessionsList.push({
+          url: `/session/${generation.name}/${session.id}`,
+          lastModified:
+            session.updatedAt > session.createdAt
+              ? session.updatedAt
+              : session.createdAt,
+          changeFrequency: "monthly",
+          priority: 0.8,
+        });
+      }
+    }
+  }
+
+  const centralPages: MetadataRoute.Sitemap = generationList.flatMap(
+    (generation) => [
+      {
+        url: `/member/${generation.name}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.9,
+      },
+      {
+        url: `/session/${generation.name}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.9,
+      },
+      {
+        url: `/project/${generation.name}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly",
+        priority: 0.9,
+      },
+    ],
+  );
+
+  const sitemapList: MetadataRoute.Sitemap = [
+    {
+      url: "",
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 1,
+    },
+    {
+      url: `/calendar`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    ...centralPages,
+    ...projectsList,
+    ...sessionsList,
+  ];
+
+  return intlSitemapGenerator(sitemapList);
+}

@@ -1,0 +1,112 @@
+import { Metadata } from 'next'
+import Link from 'next/link'
+import Image from 'next/image'
+import formatDateYYYYMMDD from '@/lib/format-date-yyyy-mm-dd'
+import { getDB } from '@/lib/db'
+import { eq } from 'drizzle-orm'
+import { generations } from '@/lib/db/schema'
+import PageTitle from '@/app/components/page-title'
+import StageButtonGroup from '@/app/components/stage-button-group'
+import getGenerationList from '@/lib/server/fetcher/getGenerationList'
+import addLangParams from '@/lib/server/add-lang-params'
+import cacheTagT from '@/lib/server/cacheTagT'
+
+export const dynamicParams = true
+export const dynamic = 'force-static'
+
+type Props = {
+  params: Promise<{ lang: string; generation: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang, generation } = await params
+
+  if (lang === 'ko') {
+    return {
+      title: `${generation} 프로젝트`,
+      description: `GDGoC Yonsei에서 개발자들이 최첨단 기술을 활용해 임팩트 있는 솔루션을 만드는 혁신적인 프로젝트들을 만나보세요.`,
+    }
+  }
+
+  return {
+    title: `${generation} Projects`,
+    description:
+      'Discover innovative projects by GDGoC Yonsei, where developers collaborate to build impactful solutions using cutting-edge technologies. Explore our work and get inspired!',
+  }
+}
+
+export async function generateStaticParams() {
+  const generationList = await getGenerationList()
+  return addLangParams(
+    generationList.map((generation) => ({ generation: generation.name })),
+    ['en', 'ko']
+  )
+}
+
+export default async function ProjectsPage({ params }: Props) {
+  'use cache'
+  cacheTagT('projects', 'generations')
+  const paramsData = await params
+
+  const db = await getDB()
+  const generationData = await db.query.generations.findFirst({
+    where: eq(generations.name, paramsData.generation),
+    with: {
+      projects: true,
+    },
+  })
+
+  return (
+    <div className={'min-h-screen w-full pt-20'}>
+      <PageTitle>
+        {paramsData.lang === 'ko' ? '프로젝트' : 'Projects'}
+      </PageTitle>
+      <StageButtonGroup
+        basePath={'project'}
+        generation={paramsData.generation}
+        lang={paramsData.lang}
+      />
+      <div
+        className={
+          'mx-auto grid w-full max-w-4xl grid-cols-1 gap-2 p-4 md:grid-cols-2 lg:grid-cols-3'
+        }
+      >
+        {generationData?.projects.length === 0 && (
+          <p>
+            {paramsData.lang === 'ko'
+              ? '해당 기수에서 프로젝트를 찾을 수 없습니다.'
+              : 'There are no projects for this generation'}
+          </p>
+        )}
+        {generationData?.projects.map((data, i) => (
+          <Link
+            href={`/${paramsData.lang}/project/${paramsData.generation}/${data?.id}`}
+            key={i}
+            className={'ring-gdg-white rounded-lg bg-white ring-2'}
+          >
+            <Image
+              src={data?.mainImage}
+              width={200}
+              height={200}
+              alt={data?.name}
+              className={'aspect-3/2 w-full rounded-t-lg object-cover'}
+            />
+            <div className={'p-3'}>
+              <h2 className={'pb-2 text-2xl font-semibold'}>
+                {paramsData.lang === 'ko' ? data?.nameKo : data?.name}
+              </h2>
+              <p className={'text-sm'}>
+                {formatDateYYYYMMDD(new Date(data?.updatedAt))}
+              </p>
+              <p className={'text-sm'}>
+                {paramsData.lang === 'ko'
+                  ? data?.descriptionKo
+                  : data?.description}
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}

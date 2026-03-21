@@ -1,0 +1,62 @@
+/**
+ * @file This file contains server-side functions for fetching a list of all verified members.
+ * It uses Next.js's unstable_cache for caching.
+ */
+
+import 'server-only'
+import { getDB } from '@/lib/db'
+import { user as users, usersToParts, parts, generations } from '@/lib/db/schema'
+import { and, desc, eq, ne } from 'drizzle-orm'
+import cacheTagT from '@/lib/server/cacheTagT'
+
+export const preload = () => {
+  void getMembers()
+}
+
+export async function getMembers() {
+  'use cache'
+  cacheTagT('members', 'parts', 'generations')
+  console.log(new Date(), 'Fetch Members Data')
+
+  const db = await getDB()
+
+  // Fetch all users (except unverified) with their associated part and generation.
+  const userList = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      firstName: users.firstName,
+      firstNameKo: users.firstNameKo,
+      lastName: users.lastName,
+      lastNameKo: users.lastNameKo,
+      role: users.role,
+      image: users.image,
+      part: parts.name,
+      generation: generations.name,
+      isForeigner: users.isForeigner,
+    })
+    .from(users)
+    .where(ne(users.role, 'UNVERIFIED'))
+    .leftJoin(
+      usersToParts,
+      and(
+        eq(usersToParts.userId, users.id),
+        eq(usersToParts.userType, 'Primary')
+      )
+    )
+    .leftJoin(parts, eq(parts.id, usersToParts.partId))
+    .leftJoin(generations, eq(generations.id, parts.generationId))
+    .orderBy(desc(generations.name), desc(parts.id), desc(users.updatedAt))
+
+  const uniqueUsersId: string[] = []
+  const uniqueUsers = []
+
+  for (const user of userList) {
+    if (!uniqueUsersId.includes(user.id)) {
+      uniqueUsers.push(user)
+      uniqueUsersId.push(user.id)
+    }
+  }
+
+  return uniqueUsers
+}

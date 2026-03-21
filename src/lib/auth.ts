@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import * as schema from "./db/schema";
+import * as schema from "@/lib/db/schema";
+import { getDB } from "@/lib/db";
+import { headers } from "next/headers";
 
 /**
  * getDB() is async (needs Cloudflare context), so we cannot pass it to
@@ -32,4 +34,26 @@ export function createAuth(db: DrizzleD1Database<typeof schema>) {
       schema,
     }),
   });
+}
+
+
+export async function getAuth() {
+  const db = await getDB();
+  return createAuth(db);
+}
+
+export async function auth() {
+  const authInstance = await getAuth();
+  const sessionData = await authInstance.api.getSession({
+    headers: await headers(),
+  });
+  
+  if (!sessionData) {
+    return null;
+  }
+  
+  return {
+    user: sessionData.user,
+    session: sessionData.session,
+  };
 }

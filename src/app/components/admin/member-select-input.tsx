@@ -1,0 +1,99 @@
+'use client'
+
+import { getMembersWithGeneration } from '@/lib/server/fetcher/admin/get-members-with-generation'
+import { useEffect, useState } from 'react'
+import formatUserName from '@/lib/format-user-name'
+
+export default function MembersSelectInput({
+  membersList,
+  defaultValue,
+}: {
+  membersList: Awaited<ReturnType<typeof getMembersWithGeneration>>
+  defaultValue: string[]
+}) {
+  const [participants, setParticipants] = useState<string[]>([])
+  const [generations, setGenerations] = useState<number[]>([])
+
+  function handleSelectMember(memberId: string) {
+    if (participants.includes(memberId)) {
+      setParticipants(participants.filter((id) => id !== memberId))
+    } else {
+      setParticipants([...participants, memberId])
+    }
+  }
+
+  function handleToggleGeneration(generationId: number) {
+    if (generations.includes(generationId)) {
+      setGenerations(generations.filter((id) => id !== generationId))
+    } else {
+      setGenerations([...generations, generationId])
+    }
+  }
+
+  useEffect(() => {
+    setParticipants(defaultValue)
+  }, [defaultValue])
+
+  return (
+    <div
+      className={
+        'col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-5'
+      }
+    >
+      <input
+        readOnly={true}
+        value={JSON.stringify(participants)}
+        hidden={true}
+        name={'participants'}
+      />
+      <p className={'text-sm font-semibold text-neutral-700'}>Participants</p>
+      <div className={'flex w-full flex-col gap-2'}>
+        {membersList.map((generation, i) => (
+          <div key={i}>
+            <div
+              className={
+                'flex w-full items-center gap-2 border-b-2 border-neutral-400 px-2'
+              }
+            >
+              <div className={'text-sm text-neutral-700'}>
+                {generation.name}
+              </div>
+              <button
+                type={'button'}
+                onClick={() => handleToggleGeneration(generation.id)}
+                className={'text-sm text-neutral-700'}
+              >
+                {generations.includes(generation.id) ? 'Close' : 'Open'}
+              </button>
+            </div>
+            <div
+              className={`grid w-full grid-cols-4 gap-2 py-2 transition-all ${generations.includes(generation.id) ? '' : 'hidden'}`}
+            >
+              {generation.parts.map((part) =>
+                part.usersToParts.map((user) => (
+                  <button
+                    type={'button'}
+                    key={`${part.id}-${user.user.id}`}
+                    className={`flex flex-col items-start rounded-lg p-1 px-2 ${participants.includes(user.user.id) ? 'bg-neutral-900 text-white' : 'bg-white'}`}
+                    onClick={() => handleSelectMember(user.user.id)}
+                  >
+                    <div className={'text-sm'}>{part.name}</div>
+                    <div>
+                      {formatUserName(
+                        user.user.name,
+                        user.user.firstNameKo,
+                        user.user.lastNameKo,
+                        user.user.isForeigner,
+                        !user.user.isForeigner
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

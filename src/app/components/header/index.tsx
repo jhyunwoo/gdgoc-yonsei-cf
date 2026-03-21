@@ -1,0 +1,27 @@
+import GDGLogoLinkButton from '@/app/components/header/gdg-logo-link-button'
+import MenuBarButton from './menu-bar-button'
+import DesktopNavigationList from '@/app/components/header/desktop-navigation-list'
+import NavigationList from '@/app/components/header/navigation-list'
+import getLastGeneration from '@/lib/server/fetcher/getLastGeneration'
+import { auth } from '@/lib/auth'
+import { Locale } from '@/i18n-config'
+
+export default async function Header({ lang }: { lang: Locale }) {
+  const lastGeneration = await getLastGeneration()
+  const isMember = !!(await auth())?.user?.id
+
+  return (
+    <div className={'fixed top-0 left-0 z-10 w-full bg-neutral-100'}>
+      <div className={'flex items-center justify-between p-4'}>
+        <GDGLogoLinkButton />
+        <MenuBarButton />
+        <DesktopNavigationList lang={lang} />
+      </div>
+      <NavigationList
+        lang={lang}
+        lastGeneration={lastGeneration?.name}
+        isMember={isMember}
+      />
+    </div>
+  )
+}

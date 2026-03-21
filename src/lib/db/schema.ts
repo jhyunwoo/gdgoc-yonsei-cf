@@ -48,13 +48,13 @@ export const user = sqliteTable("user", {
     .default(true)
     .notNull(),
   registeredAt: integer("registeredAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
 });
 
@@ -107,11 +107,11 @@ export const generations = sqliteTable("generations", {
   startDate: integer("startDate", { mode: "timestamp" }).notNull(),
   endDate: integer("endDate", { mode: "timestamp" }),
   name: text("name").notNull(),
-  createdAt: integer("createdAt", { mode: "timestamp" }).default(
-    sql`(CURRENT_TIMESTAMP)`,
+  createdAt: integer("createdAt", { mode: "timestamp" }).$defaultFn(
+    () => new Date(),
   ),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }).default(
-    sql`(CURRENT_TIMESTAMP)`,
+  updatedAt: integer("updatedAt", { mode: "timestamp" }).$defaultFn(
+    () => new Date(),
   ),
 });
 
@@ -120,11 +120,11 @@ export const parts = sqliteTable("parts", {
   name: text("name").notNull(),
   description: text("description"),
   generationId: integer("generationId").references(() => generations.id),
-  createdAt: integer("createdAt", { mode: "timestamp" }).default(
-    sql`(CURRENT_TIMESTAMP)`,
+  createdAt: integer("createdAt", { mode: "timestamp" }).$defaultFn(
+    () => new Date(),
   ),
-  updatedAt: integer("updatedAt", { mode: "timestamp" }).default(
-    sql`(CURRENT_TIMESTAMP)`,
+  updatedAt: integer("updatedAt", { mode: "timestamp" }).$defaultFn(
+    () => new Date(),
   ),
   displayOrder: integer("displayOrder").notNull().default(10),
 });
@@ -162,10 +162,10 @@ export const projects = sqliteTable("projects", {
     }),
 
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
 });
 
@@ -202,10 +202,10 @@ export const sessions = sqliteTable("sessions", {
   startAt: integer("startAt", { mode: "timestamp" }),
   endAt: integer("endAt", { mode: "timestamp" }),
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(sql`(CURRENT_TIMESTAMP)`)
+    .$defaultFn(() => new Date())
     .notNull(),
 });
 
@@ -219,8 +219,8 @@ export const externalParticipants = sqliteTable("external_participants", {
   lastNameKo: text("lastNameKo"),
   studentId: text("studentId"),
   email: text("email"),
-  createdAt: integer("createdAt", { mode: "timestamp" }).default(
-    sql`(CURRENT_TIMESTAMP)`,
+  createdAt: integer("createdAt", { mode: "timestamp" }).$defaultFn(
+    () => new Date(),
   ),
   sessionId: text("sessionId")
     .notNull()

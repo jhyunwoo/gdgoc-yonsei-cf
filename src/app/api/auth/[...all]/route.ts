@@ -1,15 +1,15 @@
-import { createAuth } from "@/lib/auth";
-import { getDB } from "@/lib/db";
+import { getAuth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
+import { NextRequest } from "next/server";
 
-export const POST = async (req: Request) => {
-  const db = await getDB();
-  const auth = createAuth(db);
-  return toNextJsHandler(auth).POST(req);
-};
+async function handler(request: NextRequest, props: { params: Promise<{ all: string[] }> }) {
+  const auth = await getAuth();
+  const { POST, GET } = toNextJsHandler(auth);
+  
+  if (request.method === "POST") {
+    return POST(request);
+  }
+  return GET(request);
+}
 
-export const GET = async (req: Request) => {
-  const db = await getDB();
-  const auth = createAuth(db);
-  return toNextJsHandler(auth).GET(req);
-};
+export { handler as GET, handler as POST };
